@@ -1,0 +1,87 @@
+\documentclass{article}
+
+\begin{document}
+<<clearAll, include = FALSE>>=
+rm(list = ls())
+
+@
+
+
+<<loadData, include = FALSE>>=
+data <- read.csv("data/ROIdataSize.csv")
+@
+
+<<LIdata, include = FALSE>>=
+right <- subset(data, data$Hem == "right")
+left <- subset(data, data$Hem == "left")
+lidata <- merge(left, right, by=c("vpn", "Condition", "ROI"))
+lidata$beta <- (lidata$beta.x - lidata$beta.y)/(lidata$beta.x + lidata$beta.y)
+lidata$ROIsizeVal <- (lidata$ROIsizeVal.x - lidata$ROIsizeVal.y) / (lidata$ROIsizeVal.x + lidata$ROIsizeVal.y)
+lidata$ROIsizeactiveVal <- (lidata$ROIsizeactiveVal.x - lidata$ROIsizeactiveVal.y) / (lidata$ROIsizeactiveVal.x + lidata$ROIsizeactiveVal.y)
+lidata <- lidata[-c(4:11)]
+@
+
+
+\section{size of roi}
+\subsection{actual size of roi}
+
+<<ROIsize, include = FALSE>>=
+size.null <- lmer(beta ~ Condition + (1|vpn) + (1|ROI), data = data, REML = FALSE)
+size.model <- lmer(beta ~ ROIsizeVal +  Condition + (1|vpn) + (1|ROI), data = data, REML = FALSE)
+actsizeRes <- anova(size.null, size.model)
+@
+
+<<plotROIsize, inclued = FALSE>>=
+plot(resid(size.null), data$ROIsizeVal)
+abline(lm(data$ROIsizeVal~resid(size.null)))
+cor.test(resid(size.null), data$ROIsizeVal)
+@
+
+<<ROIsizeLI, include = FALSE>>=
+sizeLI.null <- lmer(beta ~ Condition + (1|vpn) + (1|ROI), data = lidata, REML = FALSE)
+sizeLI.model <- lmer(beta ~ ROIsizeVal +  Condition + (1|vpn) + (1|ROI), data = lidata, REML = FALSE)
+actsizeLIRes <- anova(sizeLI.null, sizeLI.model)
+@
+
+
+<<plotROIsizeLI, inclued = FALSE>>=
+plot(resid(sizeLI.null), lidata$ROIsizeVal)
+abline(lm(lidata$ROIsizeVal~resid(sizeLI.null)))
+cor.test(resid(sizeLI.null), lidata$ROIsizeVal)
+@
+
+
+\subsection{number of active voxels}
+<<ROIsizeActive, include = FALSE>>=
+
+sizeCorr <- cor.test(data$ROIsizeactiveVal, data$beta)
+plot(data$ROIsizeactiveVal, data$beta)
+abline(lm(data$beta ~ data$ROIsizeactiveVal))
+text(5000, 4, labels = paste("r =", paste(round(sizeCorr$estimate, 2)), ", p = " ,paste(round(sizeCorr$p.value, 2))), cex = 1)
+
+@
+
+
+
+<<ROIsizeActiveLI, include = FALSE>>=
+
+sizeCorr <- cor.test(lidata$ROIsizeactiveVal, lidata$beta)
+plot(lidata$ROIsizeactiveVal, lidata$beta)
+abline(lm(lidata$beta ~ lidata$ROIsizeactiveVal))
+text(0.02, -0.7, labels = paste("r =", paste(round(sizeCorr$estimate, 2)), ", p = " ,paste(round(sizeCorr$p.value, 2))), cex = 1)
+
+@
+
+
+
+\section{atrophy}
+\section{roi definition}
+\subsection{probability atlas rois: harvard-oxford}
+\subsubsection{group peak within probabilistic roi}
+\subsection{spheric rois coordinates}
+which are the correct/best coordinates?
+\subsection{spehric rois from peak coordinates within roi}
+
+
+
+\end{document}
